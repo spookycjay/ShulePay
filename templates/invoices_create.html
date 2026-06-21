@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Create Invoice</h4>
+        <a href="{{ url_for('view_invoices') }}" class="btn btn-secondary">
+            Back to Invoices
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="POST">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Student</label>
+                        <select name="student_id" class="form-select" required>
+                            <option value="">-- Select Student --</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}">
+                                {{ student.first_name }} {{ student.last_name }}
+                                ({{ student.admission_number }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Term</label>
+                        <select name="term" class="form-select" required>
+                            <option value="">-- Select Term --</option>
+                            <option value="Term 1">Term 1</option>
+                            <option value="Term 2">Term 2</option>
+                            <option value="Term 3">Term 3</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Year</label>
+                        <input type="number" name="year" class="form-control"
+                               value="{{ current_year }}" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Due Date</label>
+                    <input type="date" name="due_date" class="form-control">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Fee Items</label>
+                    <div class="card">
+                        <div class="card-body">
+                            {% for fee in fee_structures %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input fee-checkbox"
+                                       type="checkbox"
+                                       name="fee_ids"
+                                       value="{{ fee.id }}"
+                                       data-amount="{{ fee.amount }}">
+                                <label class="form-check-label">
+                                    {{ fee.class_room.name }} - 
+                                    {{ fee.term }} {{ fee.year }} → 
+                                    KSh {{ "%.2f"|format(fee.amount|float) }}
+                                </label>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">
+                                No fee structures found. 
+                                <a href="{{ url_for('set_fee_structure') }}">
+                                    Create fee structure first
+                                </a>
+                            </p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <h5>Total Amount: 
+                        <span id="total_amount">KSh 0.00</span>
+                    </h5>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Create Invoice
+                </button>
+                <a href="{{ url_for('view_invoices') }}" 
+                   class="btn btn-secondary ms-2">Cancel</a>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Calculate total when checkboxes change
+    document.querySelectorAll('.fee-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            let total = 0;
+            document.querySelectorAll('.fee-checkbox:checked').forEach(function(checked) {
+                total += parseFloat(checked.dataset.amount);
+            });
+            document.getElementById('total_amount').textContent = 
+                'KSh ' + total.toLocaleString('en-KE', {minimumFractionDigits: 2});
+        });
+    });
+</script>
+{% endblock %}

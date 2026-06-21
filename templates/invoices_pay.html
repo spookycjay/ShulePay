@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Record Payment for {{ invoice.invoice_number }}</h4>
+        <a href="{{ url_for('view_invoice', invoice_id=invoice.id) }}" 
+           class="btn btn-secondary">Back</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Student:</strong>
+                        {{ invoice.student.first_name }} 
+                        {{ invoice.student.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Outstanding Balance:</strong>
+                        <span class="text-danger fs-5">
+                            KSh {{ "%.2f"|format(invoice.balance|float) }}
+                        </span>
+                    </div>
+
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label class="form-label">Amount (KSh)</label>
+                            <input type="number" 
+                                   name="amount" 
+                                   class="form-control"
+                                   step="0.01"
+                                   max="{{ invoice.balance }}"
+                                   placeholder="Enter amount"
+                                   required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Payment Method</label>
+                            <select name="payment_method" class="form-select">
+                                <option value="cash">Cash</option>
+                                <option value="M-Pesa">M-Pesa</option>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="cheque">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reference/Receipt No</label>
+                            <input type="text" 
+                                   name="reference" 
+                                   class="form-control"
+                                   placeholder="Optional reference number">
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            Record Payment
+                        </button>
+                        <a href="{{ url_for('view_invoice', invoice_id=invoice.id) }}" 
+                           class="btn btn-secondary ms-2">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

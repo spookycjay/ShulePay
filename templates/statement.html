@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shule Pay - Student Statement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header .school-info {
+            font-size: 13px;
+            opacity: 0.85;
+            text-align: right;
+            line-height: 1.6;
+        }
+
+        /* Student Info */
+        .student-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 25px 40px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .info-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .info-card label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+
+        .info-card p {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a73e8;
+            margin-top: 4px;
+        }
+
+        /* Summary Cards */
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 25px 40px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .summary-card {
+            text-align: center;
+            padding: 20px 10px;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .summary-card.blue   { background: linear-gradient(135deg, #1a73e8, #1558b0); }
+        .summary-card.green  { background: linear-gradient(135deg, #34a853, #1e7e34); }
+        .summary-card.orange { background: linear-gradient(135deg, #fa7b17, #e65100); }
+        .summary-card.red    { background: linear-gradient(135deg, #ea4335, #b71c1c); }
+
+        .summary-card .amount {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .summary-card .label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        /* Tables */
+        .table-section {
+            padding: 25px 40px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .table-section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+            border-left: 4px solid #1a73e8;
+            padding-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #1a73e8;
+            color: white;
+        }
+
+        thead th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        tbody tr:nth-child(even) { background: #f8f9fa; }
+        tbody tr:hover {
+            background: #e8f0fe;
+            transition: background 0.2s;
+        }
+
+        tbody td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-completed { background: #e6f4ea; color: #34a853; }
+        .status-pending   { background: #fff3e0; color: #fa7b17; }
+        .status-failed    { background: #fce8e6; color: #ea4335; }
+
+        /* Payment Method Badge */
+        .method-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        /* Footer */
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        /* Print Button */
+        .btn-print {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 30px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-print:hover { background: #0d47a1; }
+
+        /* No data message */
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-style: italic;
+        }
+
+        @media print {
+            .btn-print { display: none; }
+            body { background: white; }
+            .container { box-shadow: none; margin: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .student-info { grid-template-columns: 1fr; }
+            .summary      { grid-template-columns: repeat(2, 1fr); }
+            .header       { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>🏫 Shule Pay</h1>
+            <p style="opacity:0.8; margin-top:5px; font-size:13px;">
+                Student Financial Statement
+            </p>
+        </div>
+        <div class="school-info">
+            <strong>Shule Pay System</strong><br>
+            Generated: {{ now.strftime('%B %d, %Y') }}<br>
+            statement@shulepay.com
+        </div>
+    </div>
+
+    <!-- Student Info -->
+    <div class="student-info">
+        <div class="info-card">
+            <label>Student Name</label>
+            <p>{{ student.first_name }} {{ student.last_name }}</p>
+        </div>
+        <div class="info-card">
+            <label>Admission Number</label>
+            <p>{{ student.admission_number }}</p>
+        </div>
+        <div class="info-card">
+            <label>Class</label>
+            <p>{{ student_class.name if student_class else student.class_name }}</p>
+        </div>
+        <div class="info-card">
+            <label>Student ID</label>
+            <p>#STU-{{ student.id }}</p>
+        </div>
+        <div class="info-card">
+            <label>Total Payments Made</label>
+            <p>{{ payments|length }}</p>
+        </div>
+        <div class="info-card">
+            <label>Statement Date</label>
+            <p>{{ now.strftime('%B %d, %Y') }}</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary">
+        <div class="summary-card blue">
+            <div class="amount">
+                KES {{ "{:,.2f}".format(total_fees) }}
+            </div>
+            <div class="label">Total Fees</div>
+        </div>
+        <div class="summary-card green">
+            <div class="amount">
+                KES {{ "{:,.2f}".format(total_paid) }}
+            </div>
+            <div class="label">Amount Paid</div>
+        </div>
+        <div class="summary-card orange">
+            <div class="amount">
+                KES {{ "{:,.2f}".format(balance) }}
+            </div>
+            <div class="label">Balance Due</div>
+        </div>
+        <div class="summary-card red">
+            <div class="amount">{{ overdue_count }}</div>
+            <div class="label">Overdue Items</div>
+        </div>
+    </div>
+
+    <!-- Fee Structure Table -->
+    <div class="table-section">
+        <h2>📋 Fee Structure</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Term</th>
+                    <th>Year</th>
+                    <th>Amount (KES)</th>
+                    <th>Due Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if fee_structures %}
+                    {% for fee in fee_structures %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ fee.term }}</td>
+                        <td>{{ fee.year }}</td>
+                        <td>{{ "{:,.2f}".format(fee.amount) }}</td>
+                        <td>
+                            {% if fee.due_date %}
+                                {{ fee.due_date.strftime('%B %d, %Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="no-data">
+                            No fee structure found for this class
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Payment History Table -->
+    <div class="table-section">
+        <h2>💳 Payment History</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Reference</th>
+                    <th>M-Pesa Code</th>
+                    <th>Term / Year</th>
+                    <th>Amount (KES)</th>
+                    <th>Method</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if payments %}
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ payment.reference or 'N/A' }}</td>
+                        <td>{{ payment.mpesa_code or 'N/A' }}</td>
+                        <td>{{ payment.term }} / {{ payment.year }}</td>
+                        <td>{{ "{:,.2f}".format(payment.amount) }}</td>
+                        <td>
+                            <span class="method-badge">
+                                {{ payment.payment_method or 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if payment.payment_date %}
+                                {{ payment.payment_date.strftime('%b %d, %Y') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge 
+                                status-{{ payment.status or 'pending' }}">
+                                {% if payment.status == 'completed' %}
+                                    ✔ Paid
+                                {% elif payment.status == 'failed' %}
+                                    ✖ Failed
+                                {% else %}
+                                    ⏳ Pending
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="no-data">
+                            No payments found for this student
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Print Button -->
+    <button class="btn-print" onclick="window.print()">
+        🖨️ Print Statement
+    </button>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>This is an official Shule Pay financial statement.</p>
+        <p>For queries, contact the finance office at finance@shulepay.com</p>
+        <p style="margin-top:8px; font-weight:600;">
+            © {{ now.year }} Shule Pay System
+        </p>
+    </div>
+
+</div>
+
+</body>
+</html>

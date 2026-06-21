@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Notifications</h2>
+    <hr>
+
+    {% if notifications %}
+        {% for notification in notifications %}
+        <div class="alert alert-info">
+            <p>{{ notification.message }}</p>
+            <small>{{ notification.created_at }}</small>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-warning">
+            <p>No notifications yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

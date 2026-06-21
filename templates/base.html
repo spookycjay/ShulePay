@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ShulePay{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+          rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" 
+          rel="stylesheet">
+
+    <!-- ShulePay CSS -->
+    <link rel="stylesheet" 
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+
+        <!-- Brand -->
+        <a class="navbar-brand" href="#">🏫 ShulePay</a>
+
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" 
+                type="button" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Nav Links -->
+        <div class="collapse navbar-collapse" id="navMenu">
+            {% if current_user.is_authenticated %}
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+
+                {% if current_user.role == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'admin_dashboard' %}active{% endif %}" 
+                       href="{{ url_for('admin_dashboard') }}">
+                        📊 Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'add_payment' %}active{% endif %}"
+                       href="{{ url_for('add_payment') }}">
+                        💳 Record Payment
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'view_payments' %}active{% endif %}"
+                       href="{{ url_for('view_payments') }}">
+                        📜 Payments
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'view_students' %}active{% endif %}"
+                       href="{{ url_for('view_students') }}">
+                        👨‍🎓 Students
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'manage_classes' %}active{% endif %}"
+                       href="{{ url_for('manage_classes') }}">
+                        🏫 Classes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'set_fee_structure' %}active{% endif %}"
+                       href="{{ url_for('set_fee_structure') }}">
+                        💰 Fees
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if current_user.role == 'parent' %}
+                <li class="nav-item">
+                    <a class="nav-link 
+                        {% if request.endpoint == 'parent_dashboard' %}active{% endif %}"
+                       href="{{ url_for('parent_dashboard') }}">
+                        📊 Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-notif" 
+                       href="{{ url_for('parent_notifications') }}">
+                        🔔
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger">
+                            {{ unread_count }}
+                        </span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- User Info -->
+                <li class="nav-item">
+                    <span class="nav-link nav-user-label">
+                        👤 {{ current_user.email }} 
+                        ({{ current_user.role }})
+                    </span>
+                </li>
+
+                <!-- Logout -->
+                <li class="nav-item">
+                    <a class="nav-link btn-outline-light px-3" 
+                       href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<!-- FLASH MESSAGES -->
+<div class="container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                {% if category == 'success' %}✅
+                {% elif category == 'danger' %}❌
+                {% elif category == 'warning' %}⚠️
+                {% else %}ℹ️{% endif %}
+                {{ message }}
+                <button type="button" 
+                        class="btn-close" 
+                        data-bs-dismiss="alert">
+                </button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+<!-- PAGE CONTENT -->
+<div class="container mt-3 mb-5">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Auto dismiss alerts -->
+<script>
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(el => {
+            el.style.transition = 'opacity 0.5s';
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500);
+        });
+    }, 4000);
+</script>
+
+</body>
+</html>

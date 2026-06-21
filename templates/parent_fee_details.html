@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Fee Details for {{ student.first_name }} {{ student.last_name }}</h2>
+    
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h4>Student Information</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Admission Number:</strong> {{ student.admission_number }}</p>
+            <p><strong>Class:</strong> {{ student.class_name.name }}</p>
+            <p><strong>Academic Year:</strong> {{ datetime.now().year }}</p>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h4>Fee Structure</h4>
+        </div>
+        <div class="card-body">
+            {% if fee_structures %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Term</th>
+                            <th>Year</th>
+                            <th class="text-end">Amount (KES)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fee in fee_structures %}
+                            <tr>
+                                <td>{{ fee.term }}</td>
+                                <td>{{ fee.year }}</td>
+                                <td class="text-end">{{ "{:,.2f}".format(fee.amount) }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-active">
+                            <th colspan="2">Total Expected Fees</th>
+                            <th class="text-end">KES {{ "{:,.2f}".format(total_fees) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            {% else %}
+                <p class="text-muted">No fee structure set for this class yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header bg-success text-white">
+            <h4>Payment Summary</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>Total Fees:</strong></td>
+                    <td class="text-end">KES {{ "{:,.2f}".format(total_fees) }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Paid:</strong></td>
+                    <td class="text-end text-success">KES {{ "{:,.2f}".format(total_paid) }}</td>
+                </tr>
+                <tr class="table-active">
+                    <td><strong>Outstanding Balance:</strong></td>
+                    <td class="text-end">
+                        <strong class="{% if balance > 0 %}text-danger{% else %}text-success{% endif %}">
+                            KES {{ "{:,.2f}".format(balance) }}
+                        </strong>
+                    </td>
+                </tr>
+            </table>
+
+            {% if balance > 0 %}
+                <div class="alert alert-warning mt-3">
+                    <strong>⚠️ Notice:</strong> There is an outstanding balance of KES {{ "{:,.2f}".format(balance) }}. 
+                    Please make payment arrangements with the school administration.
+                </div>
+            {% else %}
+                <div class="alert alert-success mt-3">
+                    <strong>✅ All fees paid!</strong> Thank you for keeping your account up to date.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('parent_dashboard') }}" class="btn btn-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

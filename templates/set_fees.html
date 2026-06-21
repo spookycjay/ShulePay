@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Fee Structure Management</h2>
+       <hr>
+
+    <div class="card p-4 shadow-sm mb-4">
+        <h5>Set Fee for a Class</h5>
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <label>Select Class</label>
+                    <select name="class_id" class="form-control" required>
+                        <option value="">-- Choose Class --</option>
+                        {% for c in classes %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Amount</label>
+                    <input type="number" name="amount" class="form-control" placeholder="e.g. 5000" step="0.01" required>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label>Term</label>
+                    <select name="term" class="form-control" required>
+                        <option value="Term 1">Term 1</option>
+                        <option value="Term 2">Term 2</option>
+                        <option value="Term 3">Term 3</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label>Year</label>
+                    <input type="number" name="year" class="form-control" value="2024" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Save Fee Structure</button>
+        </form>
+    </div>
+
+    <!-- Table of Set Fees -->
+    <div class="card p-3 shadow-sm">
+        <h5>Current Fee Structures</h5>
+        <table class="table table-hover mt-2">
+            <thead class="table-dark">
+                <tr>
+                    <th>Class</th>
+                    <th>Term</th>
+                    <th>Year</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in structures %}
+                <tr>
+                    <td>{{ f.class_room.name }}</td>
+                    <td>{{ f.term }}</td>
+                    <td>{{ f.year }}</td>
+                    <td>{{ f.amount }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">No fee structures set yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

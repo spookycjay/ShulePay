@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Record Payment</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+
+                <!-- Student Selector -->
+                <div class="mb-3">
+                    <label for="student_id" class="form-label">Student</label>
+                    {% if selected_student %}
+                        <!-- Coming from student list with pre-selected student -->
+                        <input type="hidden" name="student_id" value="{{ selected_student.id }}">
+                        <input type="text" class="form-control" 
+                               value="{{ selected_student.first_name }} {{ selected_student.last_name }}" 
+                               disabled>
+                    {% else %}
+                        <!-- Admin manually selects student -->
+                        <select class="form-control" name="student_id" required>
+                            <option value="">-- Select Student --</option>
+                            {% for student in students %}
+                                <option value="{{ student.id }}">
+                                    {{ student.first_name }} {{ student.last_name }} 
+                                    ({{ student.admission_number }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount (KES)</label>
+                    <input type="number" step="0.01" class="form-control" 
+                           id="amount" name="amount" required 
+                           placeholder="e.g., 5000.00">
+                </div>
+
+                <div class="mb-3">
+                    <label for="payment_method" class="form-label">Payment Method</label>
+                    <select class="form-control" id="payment_method" name="payment_method">
+                        <option value="cash">Cash</option>
+                        <option value="mpesa">M-Pesa</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="reference" class="form-label">
+                        Reference Number (Optional)
+                    </label>
+                    <input type="text" class="form-control" id="reference" 
+                           name="reference" 
+                           placeholder="e.g., MPESA code or Cheque number">
+                </div>
+
+                {% if current_user.role == 'admin' %}
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-control" id="status" name="status">
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary">
+                    Record Payment
+                </button>
+                <a href="{{ url_for('parent_dashboard') if current_user.role == 'parent' 
+                           else url_for('admin_dashboard') }}" 
+                   class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,752 @@
+{% extends "base.html" %}
+{% block title %}Parent Dashboard - ShulePay{% endblock %}
+
+{% block content %}
+
+<div class="dashboard-wrapper">
+
+  <!-- WELCOME -->
+  <div class="welcome-section">
+    <div>
+      <h1>Welcome, 
+        <span class="parent-name">
+          {{ parent.first_name }} {{ parent.last_name }}
+        </span> 👋
+      </h1>
+      <p class="text-muted mb-0">
+        <span class="term-badge">📅 {{ current_term }}, {{ current_year }}</span>
+        &nbsp; Here's a summary of your children's fee status.
+      </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap" style="position:relative;">
+      <button class="btn btn-outline-primary btn-sm"
+              onclick="toggleNotifications()">
+        🔔 Notifications
+        {% if notifications %}
+          <span class="badge bg-danger ms-1">
+            {{ notifications|selectattr('is_read','equalto',false)|list|length }}
+          </span>
+        {% endif %}
+      </button>
+
+      <!-- NOTIFICATIONS PANEL -->
+      <div id="notifPanel" style="
+          display:none;
+          position:absolute;
+          top:40px;
+          right:0;
+          width:400px;
+          background:white;
+          border-radius:14px;
+          border:1px solid #e0e8f5;
+          box-shadow:0 8px 32px rgba(0,0,0,0.15);
+          z-index:9999;
+          overflow:hidden;">
+
+        <!-- Panel Header -->
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:14px 18px;
+            background:#f8faff;
+            border-bottom:1px solid #e0e8f5;">
+          <h6 style="margin:0;font-weight:700;">🔔 Notifications</h6>
+          <button
+            type="button"
+            onclick="closeNotifications()"
+            style="
+              background:none;
+              border:1px solid #ccc;
+              border-radius:6px;
+              padding:3px 10px;
+              cursor:pointer;
+              font-size:0.85rem;">
+            ✕ Close
+          </button>
+        </div>
+
+        <!-- Panel List -->
+        <div style="max-height:320px;overflow-y:auto;">
+          {% if notifications %}
+            {% for notif in notifications %}
+            <div class="notif-item {% if not notif.is_read %}unread{% endif %}"
+                 id="notif-{{ notif.id }}"
+                 style="
+                   display:flex;
+                   align-items:flex-start;
+                   gap:12px;
+                   padding:12px 18px;
+                   border-bottom:1px solid #f0f4f8;">
+              <div style="font-size:1.2rem;margin-top:2px;">
+                {% if notif.notification_type == 'payment_confirmed' %}✅
+                {% elif notif.notification_type == 'fee_due' %}⚠️
+                {% else %}ℹ️{% endif %}
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:0.88rem;">
+                  {{ notif.title }}
+                </div>
+                <div style="font-size:0.82rem;color:#555;margin-top:2px;">
+                  {{ notif.message }}
+                </div>
+                <div style="font-size:0.75rem;color:#aaa;margin-top:4px;">
+                  {{ notif.created_at.strftime('%d %b %Y, %H:%M') }}
+                </div>
+              </div>
+              {% if not notif.is_read %}
+              <button
+                onclick="markRead('{{ notif.id }}')"
+                style="
+                  background:none;
+                  border:1px solid #34a853;
+                  color:#34a853;
+                  border-radius:6px;
+                  padding:2px 8px;
+                  cursor:pointer;
+                  font-size:0.8rem;
+                  flex-shrink:0;">
+                ✓
+              </button>
+              {% endif %}
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="padding:20px;text-align:center;color:#aaa;">
+              No notifications yet.
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Panel Footer -->
+        <div style="
+            padding:12px 18px;
+            background:#f8faff;
+            border-top:1px solid #e0e8f5;
+            display:flex;
+            justify-content:flex-end;
+            gap:8px;">
+          <button
+            onclick="markAllRead()"
+            style="
+              background:none;
+              border:1px solid #1a73e8;
+              color:#1a73e8;
+              border-radius:8px;
+              padding:6px 14px;
+              cursor:pointer;
+              font-size:0.82rem;
+              font-weight:600;">
+            Mark all as read
+          </button>
+          <a href="{{ url_for('parent_notifications') }}"
+             style="
+               background:#1a73e8;
+               color:white;
+               border:none;
+               border-radius:8px;
+               padding:6px 14px;
+               font-size:0.82rem;
+               font-weight:600;
+               text-decoration:none;
+               display:inline-flex;
+               align-items:center;">
+            View All
+          </a>
+        </div>
+      </div>
+      <!-- END NOTIFICATIONS PANEL -->
+
+    </div>
+  </div>
+
+  <!-- CHILDREN TABS -->
+  {% if student_info|length > 1 %}
+  <div class="children-tabs" id="childrenTabs">
+    {% for info in student_info %}
+    <button class="child-tab {% if loop.first %}active{% endif %}"
+            onclick="switchChild('{{ info.student.id }}')"
+            data-child="{{ info.student.id }}">
+      <div class="child-avatar">
+        {{ info.student.first_name[0] }}{{ info.student.last_name[0] }}
+      </div>
+      <div style="text-align:left;">
+        <div style="font-weight:600;">{{ info.student.first_name }}</div>
+        <div style="font-size:0.75rem;color:#6b7280;">
+          {{ info.student.class_room.name if info.student.class_room else 'No Class' }}
+        </div>
+      </div>
+      {% if info.balance > 0 %}
+      <span class="balance-pill">KSh {{ "{:,.0f}".format(info.balance) }}</span>
+      {% endif %}
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- EACH CHILD SECTION -->
+  {% for info in student_info %}
+  <div class="child-section {% if loop.first %}active{% endif %}"
+       id="child-{{ info.student.id }}">
+
+    <!-- Child Header -->
+    <div class="child-header-card">
+      <div class="child-header-left">
+        <div class="child-avatar-lg">
+          {{ info.student.first_name[0] }}{{ info.student.last_name[0] }}
+        </div>
+        <div>
+          <h2>{{ info.student.first_name }} {{ info.student.last_name }}</h2>
+          <div class="child-meta">
+            <span>🏫 {{ info.student.class_room.name if info.student.class_room else 'No Class' }}</span>
+            <span># {{ info.student.admission_number }}</span>
+            <span class="status-badge
+              {% if info.balance == 0 %}badge-paid
+              {% elif info.is_overdue %}badge-overdue
+              {% else %}badge-partial{% endif %}">
+              {% if info.balance == 0 %}✅ Fully Paid
+              {% elif info.is_overdue %}🚨 Overdue
+              {% else %}⏳ Partial Payment{% endif %}
+            </span>
+            {% if info.due_date %}
+            <span class="{% if info.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+              Due: {{ info.due_date.strftime('%d %b %Y') }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="child-header-right">
+        <button class="btn-pay-now"
+                data-bs-toggle="modal"
+                data-bs-target="#payModal"
+                data-student-id="{{ info.student.id }}"
+                data-student-name="{{ info.student.first_name }} {{ info.student.last_name }}"
+                data-balance="{{ info.balance }}"
+                data-phone="{{ parent.phone }}">
+          💳 Pay Now
+        </button>
+        <a href="{{ url_for('download_statement', student_id=info.student.id) }}"
+           class="btn-statement">
+          📄 Statement
+        </a>
+      </div>
+    </div>
+
+    <!-- Fee Cards -->
+    <div class="fee-summary-grid">
+      <div class="fee-card">
+        <div class="fee-icon blue">💰</div>
+        <div class="fee-body">
+          <span class="fee-label">Total Fees</span>
+          <span class="fee-amount">KSh {{ "{:,.0f}".format(info.total_fees) }}</span>
+          <span class="fee-sub">{{ current_term }}, {{ current_year }}</span>
+        </div>
+      </div>
+      <div class="fee-card">
+        <div class="fee-icon green">✅</div>
+        <div class="fee-body">
+          <span class="fee-label">Total Paid</span>
+          <span class="fee-amount" style="color:#0e9f6e;">
+            KSh {{ "{:,.0f}".format(info.total_paid) }}
+          </span>
+          <span class="fee-sub">{{ info.payment_percentage }}% of total</span>
+        </div>
+      </div>
+      <div class="fee-card">
+        <div class="fee-icon {% if info.balance == 0 %}green{% else %}red{% endif %}">
+          {% if info.balance == 0 %}🎉{% else %}⚠️{% endif %}
+        </div>
+        <div class="fee-body">
+          <span class="fee-label">Balance</span>
+          <span class="fee-amount
+            {% if info.balance > 0 %}text-danger{% else %}text-success{% endif %}">
+            KSh {{ "{:,.0f}".format(info.balance) }}
+          </span>
+          <span class="fee-sub {% if info.is_overdue %}text-danger{% endif %}">
+            {% if info.balance == 0 %}All cleared!
+            {% elif info.due_date %}Due: {{ info.due_date.strftime('%d %b %Y') }}
+            {% else %}Outstanding{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-card">
+      <div class="progress-header">
+        <span>Payment Progress</span>
+        <span class="progress-pct">{{ info.payment_percentage }}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill
+            {% if info.payment_percentage == 100 %}fill-complete
+            {% elif info.payment_percentage >= 50 %}fill-halfway
+            {% else %}fill-low{% endif %}"
+             style="width:0%"
+             data-target="{{ info.payment_percentage }}">
+        </div>
+      </div>
+      <div class="progress-sublabels">
+        <span>KSh 0</span>
+        <span>KSh {{ "{:,.0f}".format(info.total_fees) }}</span>
+      </div>
+    </div>
+
+    <!-- Chart + Payments Table -->
+    <div class="bottom-grid">
+      <div class="card-box">
+        <div class="card-box-header">
+          <h5>📊 Payment History</h5>
+        </div>
+        <canvas id="chart-{{ info.student.id }}"
+                data-labels="{{ info.chart_labels }}"
+                data-amounts="{{ info.chart_amounts }}"
+                height="240"></canvas>
+        {% if not info.recent_payments %}
+        <p class="text-muted text-center mt-3" style="font-size:0.85rem;">
+          No payment data yet.
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="card-box">
+        <div class="card-box-header">
+          <h5>🧾 Recent Payments</h5>
+          <div class="payments-controls">
+            <input type="text"
+                   class="form-control form-control-sm"
+                   style="width:130px;"
+                   placeholder="Search..."
+                   oninput="searchPayments('{{ info.student.id }}', this.value)">
+            <select class="form-select form-select-sm"
+                    style="width:120px;"
+                    onchange="filterPayments('{{ info.student.id }}', this.value)">
+              <option value="all">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="payments-table" id="tbl-{{ info.student.id }}">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Term</th>
+                <th>Status</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-{{ info.student.id }}">
+              {% for payment in info.recent_payments %}
+              <tr class="pay-row" data-status="{{ payment.status }}">
+                <td>{{ payment.payment_date.strftime('%d %b %Y') if payment.payment_date else 'N/A' }}</td>
+                <td><strong>KSh {{ "{:,.0f}".format(payment.amount) }}</strong></td>
+                <td>
+                  <span class="method-pill m-{{ payment.payment_method }}">
+                    {% if payment.payment_method in ['mpesa','M-Pesa'] %}📱 M-Pesa
+                    {% elif payment.payment_method == 'bank' %}🏦 Bank
+                    {% else %}💵 Cash{% endif %}
+                  </span>
+                </td>
+                <td>{{ payment.term or '—' }}</td>
+                <td>
+                  <span class="status-pill s-{{ payment.status }}">
+                    {% if payment.status == 'completed' %}✅ Completed
+                    {% elif payment.status == 'pending' %}⏳ Pending
+                    {% else %}❌ Failed{% endif %}
+                  </span>
+                </td>
+                <td>
+                  {% if payment.reference %}
+                    <span class="ref-code">{{ payment.reference }}</span>
+                  {% elif payment.mpesa_code %}
+                    <span class="ref-code">{{ payment.mpesa_code }}</span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="empty-row">📭 No payments recorded yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        {% if info.total_pages > 1 %}
+        <div class="tbl-pagination">
+          <button class="btn-page"
+                  {% if not info.has_prev %}disabled{% endif %}
+                  onclick="loadPage('{{ info.student.id }}','{{ info.prev_page }}')">
+            ← Prev
+          </button>
+          <span>Page {{ info.current_page }} of {{ info.total_pages }}</span>
+          <button class="btn-page"
+                  {% if not info.has_next %}disabled{% endif %}
+                  onclick="loadPage('{{ info.student.id }}','{{ info.next_page }}')">
+            Next →
+          </button>
+        </div>
+        {% endif %}
+
+        <div class="text-end mt-2">
+          <a href="{{ url_for('parent_fee_details', student_id=info.student.id) }}"
+             class="btn btn-outline-primary btn-sm">
+            View Full Details →
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- PAY NOW MODAL -->
+<div class="modal fade" id="payModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;">
+      <div class="modal-header text-white"
+           style="background:linear-gradient(135deg,#34a853,#1e7e34);">
+        <h5 class="modal-title">💳 Make Payment</h5>
+        <button type="button" class="btn-close btn-close-white"
+                data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="payment-summary-box">
+          <p>Student: <strong id="modal-student-name">—</strong></p>
+          <p>Outstanding Balance:
+             <strong class="text-danger" id="modal-balance">—</strong></p>
+        </div>
+        <form id="mpesaForm"
+              action="{{ url_for('initiate_mpesa', student_id=0) }}"
+              method="POST">
+          <input type="hidden" name="student_id_hidden" id="modal-student-id">
+          <div class="mb-3">
+            <label class="form-label">Payment Method</label>
+            <select class="form-select" id="payMethodSelect"
+                    onchange="toggleMethodFields()">
+              <option value="">— Select Method —</option>
+              <option value="mpesa">📱 M-Pesa (STK Push)</option>
+              <option value="bank">🏦 Bank Transfer</option>
+              <option value="cash">💵 Cash (via Bursar)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Amount (KSh)</label>
+            <input type="number" class="form-control" name="amount"
+                   id="payAmount" min="1" placeholder="e.g. 5000" required>
+          </div>
+          <div class="method-fields" id="mpesaFields">
+            <div class="mpesa-info">
+              <div style="font-size:1.5rem;">📱</div>
+              <p class="fw-semibold mb-2">M-Pesa STK Push</p>
+              <label class="form-label">Phone Number</label>
+              <input type="tel" class="form-control" name="phone"
+                     id="payPhone" placeholder="e.g. 0712345678">
+              <small class="text-muted d-block mt-1">
+                You'll receive a prompt on your phone. Enter your PIN to complete.
+              </small>
+            </div>
+          </div>
+          <div class="method-fields" id="bankFields">
+            <div class="bank-info">
+              <h6 class="fw-bold mb-2">🏦 Bank Transfer Details</h6>
+              <div class="bank-grid">
+                <div><label>Bank</label><p>Equity Bank</p></div>
+                <div><label>Account Name</label><p>ShulePay Ltd</p></div>
+                <div><label>Account No.</label>
+                     <p><span class="ref-code">1234567890</span></p></div>
+                <div><label>Branch</label><p>Nairobi CBD</p></div>
+              </div>
+              <label class="form-label">Your Transaction Reference</label>
+              <input type="text" class="form-control" name="bank_reference"
+                     placeholder="Enter bank reference number">
+            </div>
+          </div>
+          <div class="method-fields" id="cashFields">
+            <div class="bank-info">
+              <p>ℹ️ Cash payments must be made at the school bursar's office.</p>
+              <label class="form-label">Bursar Receipt Number</label>
+              <input type="text" class="form-control" name="receipt_number"
+                     placeholder="Enter receipt number">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success"
+                onclick="submitPayment()">🚀 Submit Payment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+
+// =============================================
+// ✅ NOTIFICATIONS
+// =============================================
+function toggleNotifications() {
+    const panel = document.getElementById('notifPanel');
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+// ✅ THIS IS THE FIX - closeNotifications was missing!
+function closeNotifications() {
+    document.getElementById('notifPanel').style.display = 'none';
+}
+
+function markRead(notifId) {
+    fetch(`/notifications/mark-read/${notifId}`, { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+            const item = document.getElementById(`notif-${notifId}`);
+            if (item) {
+                item.classList.remove('unread');
+                item.style.background = 'white';
+                const btn = item.querySelector('button');
+                if (btn) btn.remove();
+            }
+            updateBadge();
+        })
+        .catch(err => console.error('markRead error:', err));
+}
+
+function markAllRead() {
+    fetch('/notifications/mark-all-read', { method: 'POST' })
+        .then(r => r.json())
+        .then(() => {
+            document.querySelectorAll('.notif-item').forEach(el => {
+                el.classList.remove('unread');
+                el.style.background = 'white';
+                const btn = el.querySelector('button');
+                if (btn) btn.remove();
+            });
+            updateBadge(0);
+
+            // ✅ Show success message
+            const list = document.getElementById('notifPanel')
+                                 .querySelector('div[style*="overflow-y"]');
+            if (list) {
+                list.innerHTML = `
+                    <div style="padding:30px;text-align:center;color:#34a853;">
+                        ✅ All notifications marked as read!
+                    </div>`;
+            }
+        })
+        .catch(err => console.error('markAllRead error:', err));
+}
+
+function updateBadge(count) {
+    const unread = count !== undefined
+        ? count
+        : document.querySelectorAll('.notif-item.unread').length;
+    document.querySelectorAll('.badge.bg-danger').forEach(b => {
+        b.textContent = unread;
+        b.style.display = unread === 0 ? 'none' : 'inline-flex';
+    });
+}
+
+// ✅ Close panel when clicking outside
+document.addEventListener('click', function(e) {
+    const panel  = document.getElementById('notifPanel');
+    const toggle = document.querySelector('[onclick="toggleNotifications()"]');
+    if (!panel || !toggle) return;
+    if (panel.style.display === 'block' &&
+        !panel.contains(e.target) &&
+        !toggle.contains(e.target)) {
+        panel.style.display = 'none';
+    }
+});
+
+// =============================================
+// ✅ CHILDREN TABS
+// =============================================
+function switchChild(childId) {
+    document.querySelectorAll('.child-section')
+            .forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.child-tab')
+            .forEach(t => t.classList.remove('active'));
+    document.getElementById(`child-${childId}`)?.classList.add('active');
+    document.querySelector(`[data-child="${childId}"]`)?.classList.add('active');
+}
+
+// =============================================
+// ✅ PROGRESS BARS
+// =============================================
+function animateProgressBars() {
+    document.querySelectorAll('.progress-fill[data-target]').forEach(bar => {
+        setTimeout(() => {
+            bar.style.width = bar.dataset.target + '%';
+        }, 300);
+    });
+}
+
+// =============================================
+// ✅ CHARTS
+// =============================================
+function initCharts() {
+    document.querySelectorAll('canvas[id^="chart-"]').forEach(canvas => {
+        const labels  = JSON.parse(canvas.dataset.labels  || '[]');
+        const amounts = JSON.parse(canvas.dataset.amounts || '[]');
+        if (!labels.length) return;
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Amount Paid (KSh)',
+                    data: amounts,
+                    backgroundColor: 'rgba(26,86,219,0.18)',
+                    borderColor: 'rgba(26,86,219,0.85)',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` KSh ${ctx.parsed.y.toLocaleString()}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: v => `KSh ${(v/1000).toFixed(0)}k`,
+                            font: { size: 10 }
+                        },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    });
+}
+
+// =============================================
+// ✅ PAYMENTS TABLE
+// =============================================
+function searchPayments(studentId, query) {
+    document.querySelectorAll(`#tbl-${studentId} .pay-row`).forEach(row => {
+        row.style.display =
+            row.textContent.toLowerCase().includes(query.toLowerCase())
+            ? '' : 'none';
+    });
+}
+
+function filterPayments(studentId, status) {
+    document.querySelectorAll(`#tbl-${studentId} .pay-row`).forEach(row => {
+        row.style.display =
+            (status === 'all' || row.dataset.status === status) ? '' : 'none';
+    });
+}
+
+function loadPage(studentId, page) {
+    fetch(`/payments/ajax?student_id=${studentId}&page=${page}`)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.getElementById(`tbody-${studentId}`);
+            if (!tbody) return;
+            if (!data.payments.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-row">
+                    📭 No payments found.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = data.payments.map(p => `
+                <tr class="pay-row" data-status="${p.status}">
+                    <td>${p.date}</td>
+                    <td><strong>KSh ${Number(p.amount).toLocaleString()}</strong></td>
+                    <td><span class="method-pill m-${p.method}">
+                        ${p.method === 'mpesa' || p.method === 'M-Pesa'
+                            ? '📱 M-Pesa'
+                            : p.method === 'bank' ? '🏦 Bank' : '💵 Cash'}
+                    </span></td>
+                    <td>${p.term || '—'}</td>
+                    <td><span class="status-pill s-${p.status}">
+                        ${p.status === 'completed' ? '✅ Completed'
+                            : p.status === 'pending' ? '⏳ Pending' : '❌ Failed'}
+                    </span></td>
+                    <td>${p.reference
+                        ? `<span class="ref-code">${p.reference}</span>`
+                        : '<span class="text-muted">—</span>'}
+                    </td>
+                </tr>`).join('');
+        }).catch(console.error);
+}
+
+// =============================================
+// ✅ PAY MODAL
+// =============================================
+document.getElementById('payModal')?.addEventListener('show.bs.modal', e => {
+    const btn = e.relatedTarget;
+    document.getElementById('modal-student-name').textContent =
+        btn.dataset.studentName;
+    document.getElementById('modal-balance').textContent =
+        `KSh ${parseFloat(btn.dataset.balance || 0).toLocaleString()}`;
+    document.getElementById('modal-student-id').value = btn.dataset.studentId;
+    document.getElementById('payPhone').value = btn.dataset.phone || '';
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payMethodSelect').value = '';
+    document.getElementById('mpesaForm').action =
+        `/pay/mpesa/${btn.dataset.studentId}`;
+    document.querySelectorAll('.method-fields')
+            .forEach(f => f.classList.remove('show'));
+});
+
+function toggleMethodFields() {
+    const method = document.getElementById('payMethodSelect').value;
+    document.querySelectorAll('.method-fields')
+            .forEach(f => f.classList.remove('show'));
+    const map = { mpesa:'mpesaFields', bank:'bankFields', cash:'cashFields' };
+    if (map[method]) document.getElementById(map[method]).classList.add('show');
+}
+
+function submitPayment() {
+    const method = document.getElementById('payMethodSelect').value;
+    const amount = document.getElementById('payAmount').value;
+    if (!method) { alert('Please select a payment method.'); return; }
+    if (!amount || amount < 1) { alert('Please enter a valid amount.'); return; }
+    if (method === 'mpesa') {
+        document.getElementById('mpesaForm').submit();
+    } else {
+        alert('For bank/cash payments, please contact the school bursar.');
+    }
+}
+
+// =============================================
+// ✅ ON PAGE LOAD
+// =============================================
+document.addEventListener('DOMContentLoaded', () => {
+    animateProgressBars();
+    initCharts();
+});
+
+</script>
+
+{% endblock %}

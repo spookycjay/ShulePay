@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - ShulePay{% endblock %}
+
+{% block content %}
+<div class="page-header mt-3">
+    <h2>📊 Admin Dashboard</h2>
+    <p>Welcome back, <strong>{{ current_user.email }}</strong>! 
+       Manage your school operations below.</p>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <span class="stat-icon">👨‍🎓</span>
+            <div class="stat-label">Total Students</div>
+            <div class="stat-number">{{ students }}</div>
+            <div class="stat-sub">Registered students</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <span class="stat-icon">👨‍👩‍👧</span>
+            <div class="stat-label">Total Parents</div>
+            <div class="stat-number">{{ parents }}</div>
+            <div class="stat-sub">Registered parents</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card purple">
+            <span class="stat-icon">🏫</span>
+            <div class="stat-label">Classes</div>
+            <div class="stat-number">{{ classes }}</div>
+            <div class="stat-sub">Active classes</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <span class="stat-icon">💰</span>
+            <div class="stat-label">Today's Total</div>
+            <div class="stat-number">
+                KSh {{ "{:,.0f}".format(total_today) }}
+            </div>
+            <div class="stat-sub">
+                {{ payments|length }} transactions today
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header">
+        ⚡ Quick Actions
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3 col-6">
+                <a href="{{ url_for('manage_classes') }}" 
+                   class="action-card">
+                    <span class="action-icon">🏫</span>
+                    <h5>Manage Classes</h5>
+                    <p>Add or view classes</p>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a href="{{ url_for('add_student') }}" 
+                   class="action-card">
+                    <span class="action-icon">👨‍🎓</span>
+                    <h5>Add Student</h5>
+                    <p>Register new student</p>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a href="{{ url_for('add_parent') }}" 
+                   class="action-card">
+                    <span class="action-icon">👨‍👩‍👧</span>
+                    <h5>Add Parent</h5>
+                    <p>Create parent account</p>
+                </a>
+            </div>
+            <div class="col-md-3 col-6">
+                <a href="{{ url_for('add_payment') }}" 
+                   class="action-card">
+                    <span class="action-icon">💳</span>
+                    <h5>Record Payment</h5>
+                    <p>Accept fees</p>
+                </a>
+            </div>
+            <div class="col-md-4 col-6">
+                <a href="{{ url_for('view_students') }}" 
+                   class="action-card">
+                    <span class="action-icon">📋</span>
+                    <h5>View Students</h5>
+                    <p>See all registered students</p>
+                </a>
+            </div>
+            <div class="col-md-4 col-6">
+                <a href="{{ url_for('set_fee_structure') }}" 
+                   class="action-card">
+                    <span class="action-icon">💰</span>
+                    <h5>Set Fees</h5>
+                    <p>Manage fee structure</p>
+                </a>
+            </div>
+            <div class="col-md-4 col-6">
+                <a href="{{ url_for('view_payments') }}" 
+                   class="action-card">
+                    <span class="action-icon">📜</span>
+                    <h5>View Payments</h5>
+                    <p>See all recorded payments</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Payments -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>💳 Recent Payments (Today)</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success">🟢 Live</span>
+            <a href="{{ url_for('view_payments') }}" 
+               class="btn btn-outline-primary btn-sm">
+                View All →
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if payments %}
+        <div class="table-wrapper">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Reference</th>
+                        <th>Time</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="student-avatar" style="width:36px;height:36px;font-size:0.85rem;">
+                                    {{ payment.student.first_name[0] }}{{ payment.student.last_name[0] }}
+                                </div>
+                                <div>
+                                    <strong>
+                                        {{ payment.student.first_name }} 
+                                        {{ payment.student.last_name }}
+                                    </strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ payment.student.admission_number }}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <strong style="color:#1a73e8;">
+                                KSh {{ "{:,.2f}".format(payment.amount) }}
+                            </strong>
+                        </td>
+                        <td>{{ payment.payment_method or 'N/A' }}</td>
+                        <td>
+                            <span class="ref-code">
+                                {{ payment.reference or 'N/A' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if payment.payment_date %}
+                                {{ payment.payment_date.strftime('%I:%M %p') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge-status 
+                                {% if payment.status == 'completed' %}badge-completed
+                                {% elif payment.status == 'failed' %}badge-failed
+                                {% else %}badge-pending{% endif %}">
+                                {% if payment.status == 'completed' %}✔ Paid
+                                {% elif payment.status == 'failed' %}✖ Failed
+                                {% else %}⏳ Pending{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">💳</span>
+            <h4>No payments recorded today</h4>
+            <p>Transactions will appear here once started.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

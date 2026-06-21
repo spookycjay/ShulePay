@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>All Payments</h2>
+        <a href="{{ url_for('add_payment') }}" class="btn btn-primary">
+            + Record New Payment
+        </a>
+    </div>
+
+    {% if payments %}
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white text-center p-3">
+                    <h6>Total Collected</h6>
+                    <h4>TZS {{ "{:,.2f}".format(
+                        payments | selectattr('status', 'equalto', 'completed') 
+                        | map(attribute='amount') | map('float') | sum
+                    ) }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-dark text-center p-3">
+                    <h6>Pending</h6>
+                    <h4>TZS {{ "{:,.2f}".format(
+                        payments | selectattr('status', 'equalto', 'pending') 
+                        | map(attribute='amount') | map('float') | sum
+                    ) }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white text-center p-3">
+                    <h6>Total Transactions</h6>
+                    <h4>{{ payments | length }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="text" id="searchInput" class="form-control" 
+                       placeholder="Search by student name or reference...">
+            </div>
+            <div class="col-md-3">
+                <select id="filterStatus" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Payments Table -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover" id="paymentsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Admission No.</th>
+                                <th>Class</th>
+                                <th>Amount (TZS)</th>
+                                <th>Method</th>
+                                <th>Reference</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    {% if payment.payment_date %}
+                                        {{ payment.payment_date.strftime('%d %b %Y, %H:%M') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if payment.student %}
+                                        {{ payment.student.first_name }} {{ payment.student.last_name }}
+                                    {% else %}
+                                        <span class="text-muted">Unknown</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if payment.student %}
+                                        {{ payment.student.admission_number }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if payment.student and payment.student.student_class %}
+                                        {{ payment.student.student_class.name }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ "{:,.2f}".format(payment.amount | float) }}</strong></td>
+                                <td>
+                                    {% if payment.payment_method == 'cash' %}
+                                        <span class="badge bg-secondary">Cash</span>
+                                    {% elif payment.payment_method == 'mobile_money' %}
+                                        <span class="badge bg-success">Mobile Money</span>
+                                    {% elif payment.payment_method == 'bank_transfer' %}
+                                        <span class="badge bg-primary">Bank Transfer</span>
+                                    {% elif payment.payment_method == 'cheque' %}
+                                        <span class="badge bg-info">Cheque</span>
+                                    {% else %}
+                                        <span class="badge bg-dark">{{ payment.payment_method }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ payment.reference or '-' }}</td>
+                                <td>
+                                    {% if payment.status == 'completed' %}
+                                        <span class="badge bg-success">✅ Completed</span>
+                                    {% elif payment.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">⏳ Pending</span>
+                                    {% elif payment.status == 'failed' %}
+                                        <span class="badge bg-danger">❌ Failed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ payment.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <h5 class="text-muted">No payments recorded yet</h5>
+                <p class="text-muted">Click the button above to record the first payment.</p>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- Search & Filter Script -->
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', filterTable);
+    document.getElementById('filterStatus').addEventListener('change', filterTable);
+
+    function filterTable() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('filterStatus').value.toLowerCase();
+        const rows = document.querySelectorAll('#paymentsTable tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowStatus = row.cells[8]?.textContent.toLowerCase() || '';
+
+            const matchSearch = text.includes(search);
+            const matchStatus = !status || rowStatus.includes(status);
+
+            row.style.display = (matchSearch && matchStatus) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}

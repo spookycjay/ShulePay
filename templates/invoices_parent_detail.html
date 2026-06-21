@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4>Invoice {{ invoice.invoice_number }}</h4>
+        <a href="{{ url_for('parent_invoices') }}" 
+           class="btn btn-secondary">Back</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between">
+                    <h5 class="mb-0">Invoice Details</h5>
+                    {% if invoice.status == 'paid' %}
+                        <span class="badge bg-success">Paid</span>
+                    {% elif invoice.status == 'partial' %}
+                        <span class="badge bg-warning">Partial</span>
+                    {% else %}
+                        <span class="badge bg-danger">Unpaid</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Student:</strong>
+                            {{ invoice.student.first_name }}
+                            {{ invoice.student.last_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Term:</strong> {{ invoice.term }} {{ invoice.year }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Due Date:</strong>
+                        {{ invoice.due_date.strftime('%d %b %Y') if invoice.due_date else 'N/A' }}
+                    </div>
+
+                    <h6>Fee Items</h6>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in invoice.items %}
+                            <tr>
+                                <td>{{ item.description }}</td>
+                                <td class="text-end">
+                                    KSh {{ "%.2f"|format(item.amount|float) }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold">
+                                <td>Total</td>
+                                <td class="text-end">
+                                    KSh {{ "%.2f"|format(invoice.total_amount|float) }}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total:</span>
+                        <strong>KSh {{ "%.2f"|format(invoice.total_amount|float) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Paid:</span>
+                        <strong class="text-success">
+                            KSh {{ "%.2f"|format(invoice.paid_amount|float) }}
+                        </strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>Balance:</span>
+                        <strong class="text-danger">
+                            KSh {{ "%.2f"|format(invoice.balance|float) }}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

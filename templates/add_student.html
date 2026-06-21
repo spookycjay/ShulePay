@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Add Student - ShulePay{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-plus me-2 text-success"></i>Add Student
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="admission_number" class="form-label">Admission Number</label>
+                            <input type="text" name="admission_number" id="admission_number" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" name="first_name" id="first_name" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" name="last_name" id="last_name" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="class_id" class="form-label">Class</label>
+                            <select name="class_id" id="class_id" class="form-control" required>
+                                <option value="">Select Class</option>
+                                {% for class_item in classes %}
+                                    <option value="{{ class_item.id }}">{{ class_item.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="parent_id" class="form-label">Parent</label>
+                            <select name="parent_id" id="parent_id" class="form-control" required>
+                                <option value="">Select Parent</option>
+                                {% for parent in parents %}
+                                    <option value="{{ parent.id }}">
+                                        {{ parent.first_name }} {{ parent.last_name }} - {{ parent.email }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Add Student
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if classes|length == 0 %}
+            <div class="alert alert-warning mt-3">
+                No classes found. Please add classes first.
+            </div>
+            {% endif %}
+
+            {% if parents|length == 0 %}
+            <div class="alert alert-warning mt-3">
+                No parents found. Please add a parent account first.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
