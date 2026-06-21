@@ -1,20 +1,18 @@
-# .gitignore
-
 # Virtual Environment
 venv/
 
-# Environment Variables (IMPORTANT - never push this!)
+# Environment Variables
 .env
 
 # Python cache
 __pycache__/
 *.pyc
 *.pyo
-instance/
 
 # Database
 *.db
 *.sqlite
+instance/
 
 # VS Code
 .vscode/
